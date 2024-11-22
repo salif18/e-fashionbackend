@@ -3,7 +3,7 @@ const Abonnees = require("../models/abonnees_model");
 exports.registre = async (req, res) => {
     try {
         const { email } = req.body;
-
+    console.log(email)
         // Vérifier si l'abonné existe déjà
         const abonneExist = await Abonnees.findOne({ email });
         if (abonneExist) {
