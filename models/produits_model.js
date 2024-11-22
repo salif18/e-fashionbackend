@@ -14,9 +14,11 @@ const SizeSchema = new mongoose.Schema({
   });
 
   const CommentSchema = new mongoose.Schema({
+    userId:{type: mongoose.Schema.Types.ObjectId, ref: "Users"},
     name:{type:String},
     rating: { type: Number},
     avis: { type: String},
+    date:{type:Date ,default: Date.now}
   });
   
   // Définition du schéma principal
