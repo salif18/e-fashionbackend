@@ -11,6 +11,7 @@ const Commandes_Router = require("./routes/route_commandes")
 const Categories_Router = require("./routes/route_categories")
 const Fournisseurs_Router = require("./routes/route_fournisseurs")
 const Comments_Router = require("./routes/route_commentaires")
+const Abonnees_Router = require("./routes/route_abonnees")
 
 app.use(cors());
 app.use(express.json());
@@ -33,6 +34,6 @@ app.use("/api/commandes", Commandes_Router);
 app.use("/api/categories", Categories_Router);
 app.use("/api/fournisseurs", Fournisseurs_Router);
 app.use("/api/commentaires",Comments_Router)
-
+app.use("/api/newletter",Abonnees_Router)
 
 module.exports = app;
