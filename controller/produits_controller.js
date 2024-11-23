@@ -108,65 +108,72 @@ exports.getOneProduits = async (req, res) => {
 exports.update = async (req, res) => {
     try {
         const { id } = req.params;
+
         if (!id) {
             return res.status(400).json({ message: 'ID du produit manquant' });
         }
 
-        const { nom, categories, prix_achat, prix_vente, stocks } = req.body;
-
-        // Trouver le produit existant
+        // Récupérer le produit existant
         const produit = await Produits.findById(id);
 
         if (!produit) {
             return res.status(404).json({ message: 'Produit non trouvé' });
         }
 
-        // Vérification d'autorisation
-        if (produit.userId.toString() !== req.auth.userId) {
-            return res.status(401).json({ message: 'Non autorisé' });
+        // Préparer les données à mettre à jour
+        const { name, category, subCategory, brand, description, price, 
+                is_promo, promo_price, discount_percentage, stockGlobal, 
+                othersColors, commentaires } = req.body;
+
+        // Mettre à jour uniquement les champs nécessaires
+        produit.name = name || produit.name;
+        produit.category = category || produit.category;
+        produit.subCategory = subCategory || produit.subCategory;
+        produit.brand = brand || produit.brand;
+        produit.description = description || produit.description;
+        produit.price = price || produit.price;
+        produit.is_promo = is_promo !== undefined ? is_promo : produit.is_promo;
+        produit.promo_price = promo_price || produit.promo_price;
+        produit.discount_percentage = discount_percentage || produit.discount_percentage;
+        produit.stockGlobal = stockGlobal || produit.stockGlobal;
+
+        // Mettre à jour les autres couleurs (si spécifiées)
+        if (othersColors) {
+            produit.othersColors = othersColors.map(color => ({
+                color: color.color || undefined,
+                images: color.images || undefined,
+                stock: color.stock || 0,
+                sizes: color.sizes ? color.sizes.map(size => ({
+                    size: size.size || undefined,
+                    stock: size.stock || 0,
+                })) : [],
+            }));
         }
 
-        let imageUrl = produit.image; // Garder l'image actuelle si pas de mise à jour
-        let cloudinaryId = produit.cloudinaryId; // Garder l'ancien Cloudinary ID si non modifié
-        if (req.file) {
-            // Si le produit a déjà une image associée, la supprimer sur Cloudinary
-            if (produit.cloudinaryId) {
-                await cloudinary.uploader.destroy(produit.cloudinaryId);
-            }
-
-            // Uploader la nouvelle image sur Cloudinary
-            const result = await cloudinary.uploader.upload(req.file.path);
-            imageUrl = result.secure_url; // URL sécurisée de la nouvelle image
-            cloudinaryId = result.public_id; // ID Cloudinary de la nouvelle image
+        // Ajouter ou mettre à jour les commentaires (si spécifiés)
+        if (commentaires) {
+            produit.commentaires = commentaires.map(comment => ({
+                userId: comment.userId || undefined,
+                name: comment.name || undefined,
+                rating: comment.rating || undefined,
+                avis: comment.avis || undefined,
+                date: comment.date || new Date(),
+            }));
         }
 
-        // Mise à jour du produit avec les nouvelles valeurs
-        const produitMisAJour = await Produits.findByIdAndUpdate(
-            id,
-            {
-                nom: nom ? nom : produit.nom,
-                // STOCKER EN LOCAL
-                // image: req.file ? `${req.protocol}://${req.get("host")}/images/${req.file.filename}` : produit.image,
-                image: imageUrl, // URL Cloudinary renvoyée dans req.file.path
-                cloudinaryId:cloudinaryId,
-                categories: categories.length > 0 ? categories : produit.categories,
-                prix_achat: prix_achat.length > 0 ? prix_achat : produit.prix_achat,
-                prix_vente: prix_vente.length > 0 ? prix_vente : produit.prix_vente,
-                stocks: stocks.length > 0 ? stocks : produit.stocks
-            },
-            { new: true } // retourne le document mis à jour
-        );
+        // Sauvegarder les modifications
+        const produitMisAJour = await produit.save();
 
-        if (!produitMisAJour) {
-            return res.status(400).json({ message: 'Erreur lors de la mise à jour du produit' });
-        }
-
-        return res.status(200).json({ message: 'Produit modifié avec succès', produits: produitMisAJour });
+        return res.status(200).json({
+            message: 'Produit mis à jour avec succès',
+            produit: produitMisAJour,
+        });
 
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
 };
+
 
 
 exports.delete = async (req, res) => {
