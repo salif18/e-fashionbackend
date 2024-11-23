@@ -276,7 +276,7 @@ exports.getUserCommandes = async (req, res) => {
     const { userId } = req.params;
 
     // Étape 1 : Récupérer toutes les commandes de l'utilisateur
-    const orders = await Commandes.find({ userId });
+    const orders = await Commandes.find({ userId }).sort({createdAt:-1});
     if (!orders || orders.length === 0) {
       return res.status(404).json({ message: 'Aucune commande trouvée pour cet utilisateur.' });
     }
@@ -342,7 +342,7 @@ exports.delete = async (req, res, next) => {
     }
 
     // Vérifier le statut de la commande
-    if (order.status !== "en attente") {
+    if (order.status !== "En attente") {
       return res.status(400).json({
         message: 'Seules les commandes en attente peuvent être annulées.'
       });
