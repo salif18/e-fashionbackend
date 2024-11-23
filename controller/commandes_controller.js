@@ -60,7 +60,7 @@ exports.create = async (req, res) => {
       user,
       address,
       payementMode,
-      status: "en attente",
+      status:"En attente",
       cart,
       total,
     });
