@@ -36,7 +36,7 @@ exports.create = async (req, res) => {
         const sizeVariant = colorVariant.sizes.find((s) => s.size === size);
         if (!sizeVariant || sizeVariant.stock < qty) {
           return res.status(400).json({
-            message: `Stock insuffisant pour la taille "${size}" de la couleur "${color}" du produit "${produit.name}".`,
+            message: `Stock insuffisant pour la taille "${size}" de la couleur "${color}" du produit "${produit.name}" stock restant "${stock}".`,
           });
         }
 
