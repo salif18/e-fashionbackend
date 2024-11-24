@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 exports.create = async (req, res) => {
   try {
     const { userId, user, address, payementMode, cart, total } = req.body;
-
+  console.log(req.body)
     for (const item of cart) {
       const { producId, qty, size, color } = item;
 
@@ -178,7 +178,7 @@ exports.getOneCommandes = async (req, res) => {
             name: product.name,
             image: product.othersColors[0].images,
             qty: item.qty,
-            is_promo:product.is_promo,  
+            is_promo:item.promotion,  
             discount_percentage:product.discount_percentage,
             price: item.price,
             color: item.color,

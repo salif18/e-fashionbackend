@@ -18,6 +18,7 @@ const UserSchema = new mongoose.Schema({
   const CartItemSchema = new mongoose.Schema({
     producId: { type: mongoose.Schema.Types.ObjectId, ref: "Produits", required: true },
     price: { type: Number, required: true },
+    promotion: { type: Boolean , default:false},
     qty: { type: Number, required: true },
     size: { type: String, required: false }, // La taille peut être facultative
     color: { type: String, required: false }, // La couleur peut être facultative
