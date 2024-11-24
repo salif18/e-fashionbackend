@@ -174,7 +174,7 @@ exports.update = async (req, res) => {
 
         // Préparer les données à mettre à jour
         const { name, category, subCategory, brand, description, price, 
-                is_promo, promo_price, discount_percentage, stockGlobal, 
+                is_promo, discount_percentage, stockGlobal, 
                 othersColors, commentaires } = req.body;
 
         // Mettre à jour uniquement les champs nécessaires
@@ -185,7 +185,9 @@ exports.update = async (req, res) => {
         produit.description = description || produit.description;
         produit.price = price || produit.price;
         produit.is_promo = is_promo !== undefined ? is_promo : produit.is_promo;
-        produit.promo_price = promo_price || produit.promo_price;
+        produit.promo_price = is_promo && discount_percentage > 0 
+        ? price - (price * discount_percentage / 100) 
+        : null,
         produit.discount_percentage = discount_percentage || produit.discount_percentage;
         produit.stockGlobal = stockGlobal || produit.stockGlobal;
 
