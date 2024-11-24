@@ -55,6 +55,57 @@ exports.getProduits = async (req, res) => {
     }
 };
 
+exports.getPromos = async (req, res) => {
+    try {
+      // Étape 1 : Trouver le produit spécial avec le plus grand `discount_percentage`
+      let produitSpecial = await Produits.findOne({ is_promo: true })
+        .sort({ discount_percentage: -1 }) // Trier par `discount_percentage` en ordre décroissant
+        .limit(1); // Récupérer seulement un produit
+  
+      if (!produitSpecial) {
+        return res.status(404).json({ message: "Actuellement pas de promo" });
+      }
+  
+      // Ajouter la première image du premier élément de `othersColors` pour le produit spécial
+      const firstColorSpecial = produitSpecial.othersColors?.[0]; // Vérifier si `othersColors` n'est pas vide
+      const firstImageSpecial = firstColorSpecial?.images || null; // Récupérer l'image si elle existe
+      produitSpecial = {
+        ...produitSpecial.toObject(),
+        image: firstImageSpecial, // Ajouter l'image au résultat
+      };
+  
+      // Étape 2 : Trouver les autres produits en promo, en excluant le produit spécial
+      const autresPromos = await Produits.find({
+        is_promo: true,
+        _id: { $ne: produitSpecial._id }, // Exclure l'ID du produit spécial
+      });
+  
+      // Ajouter la première image de `othersColors` pour chaque produit des autres promos
+      const autresPromosAvecImages = autresPromos.map((produit) => {
+        const firstColor = produit.othersColors?.[0]; // Vérifier si `othersColors` n'est pas vide
+        const firstImage = firstColor?.images || null; // Récupérer l'image si elle existe
+        return {
+          ...produit.toObject(),
+          image: firstImage, // Ajouter l'image à chaque produit
+        };
+      });
+  
+      if (!autresPromos || autresPromosAvecImages.length === 0) {
+        return res.status(404).json({ message: "Aucun autre produit en promotion trouvé" });
+      }
+  
+      // Réponse avec le produit spécial et les autres promotions
+      return res.status(200).json({
+        message: "Requête reçue",
+        specialOffre: produitSpecial,
+        allOffre: autresPromosAvecImages,
+      });
+    } catch (err) {
+      return res.status(500).json({ message: "Erreur", error: err.message });
+    }
+  };
+  
+
 exports.getOneProduits = async (req, res) => {
     try {
         const { id } = req.params;
