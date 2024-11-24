@@ -17,6 +17,7 @@ const UserSchema = new mongoose.Schema({
   // Sous-schéma pour un élément du panier
   const CartItemSchema = new mongoose.Schema({
     producId: { type: mongoose.Schema.Types.ObjectId, ref: "Produits", required: true },
+    price: { type: Number, required: true },
     qty: { type: Number, required: true },
     size: { type: String, required: false }, // La taille peut être facultative
     color: { type: String, required: false }, // La couleur peut être facultative

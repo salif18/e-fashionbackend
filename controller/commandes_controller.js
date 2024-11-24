@@ -180,7 +180,7 @@ exports.getOneCommandes = async (req, res) => {
             qty: item.qty,
             is_promo:product.is_promo,  
             discount_percentage:product.discount_percentage,
-            price: product.is_promo ? product.promo_price : product.price,
+            price: item.price,
             color: item.color,
             size: item.size,
           }
