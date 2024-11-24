@@ -17,6 +17,8 @@ const UserSchema = new mongoose.Schema({
   // Sous-schéma pour un élément du panier
   const CartItemSchema = new mongoose.Schema({
     producId: { type: mongoose.Schema.Types.ObjectId, ref: "Produits", required: true },
+    image:{ type: String, required: false },
+    name:{ type: String, required: false },
     price: { type: Number, required: true },
     promotion: { type: Boolean , default:false},
     qty: { type: Number, required: true },

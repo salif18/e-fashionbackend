@@ -174,9 +174,9 @@ exports.getOneCommandes = async (req, res) => {
         );
         return product
           ? {
-            id: product._id,
-            name: product.name,
-            image: product.othersColors[0].images,
+            id: item._id,
+            name: item.name,
+            image: item.image,
             qty: item.qty,
             is_promo:item.promotion,  
             discount_percentage:product.discount_percentage,
