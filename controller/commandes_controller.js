@@ -6,7 +6,7 @@ const mongoose = require("mongoose");
 exports.create = async (req, res) => {
   try {
     const { userId, user, address, payementMode, cart, total } = req.body;
-  console.log(req.body)
+  
     for (const item of cart) {
       const { producId, qty, size, color } = item;
 
@@ -432,121 +432,298 @@ exports.getStatsByCategories = async (req, res, next) => {
 };
 
 exports.getStatsHebdo = async (req, res, next) => {
-
   try {
-
-    const { userId } = req.params
-
+    
+    // Début et fin de la semaine en cours
     const startOfWeek = moment().startOf('isoWeek').toDate();
     const endOfWeek = moment().endOf('isoWeek').toDate();
 
     let data = [];
     let currentDate = moment(startOfWeek);
 
+    // Boucle pour chaque jour de la semaine
     while (currentDate <= endOfWeek) {
-      const total = await Vente.aggregate([
+      const total = await Commandes.aggregate([
         {
           $match: {
-            userId: new mongoose.Types.ObjectId(userId),
-            date_vente: {
-              $gte: currentDate.toDate(),
-              $lt: currentDate.clone().add(1, 'days').toDate(),
+            status: "Livrée", // Filtrer uniquement les commandes livrées
+            createdAt: {
+              $gte: currentDate.toDate(), // Début de la journée
+              $lt: currentDate.clone().add(1, 'days').toDate(), // Fin de la journée
             },
           },
         },
         {
           $group: {
-            _id: null,
-            total: { $sum: "$prix_vente" },
+            _id: null, // Pas de regroupement spécifique
+            total: { $sum: "$total" }, // Somme des totaux de commande
           },
         },
       ]);
 
+      // Ajout des données journalières
       data.push({
         date: currentDate.format('DD-MM-YYYY'),
         total: total.length > 0 ? total[0].total : 0,
       });
 
-      currentDate.add(1, 'day');
+      currentDate.add(1, 'day'); // Passer au jour suivant
     }
 
-    const totalHebdomendaire = await Vente.aggregate([
+    // Calcul du total hebdomadaire
+    const totalHebdomendaire = await Commandes.aggregate([
       {
         $match: {
-          userId: new mongoose.Types.ObjectId(userId),
-          date_vente: {
-            $gte: startOfWeek,
-            $lte: endOfWeek,
+          status: "Livrée", // Filtrer uniquement les commandes livrées
+          createdAt: {
+            $gte: startOfWeek, // Début de la semaine
+            $lte: endOfWeek, // Fin de la semaine
           },
         },
       },
       {
         $group: {
           _id: null,
-          total: { $sum: "$prix_vente" },
+          total: { $sum: "$total" }, // Somme des totaux hebdomadaires
         },
       },
     ]);
 
+    // Réponse au client
     return res.status(200).json({
-      stats: data,
+      statsWeek: data,
       totalHebdo: totalHebdomendaire.length > 0 ? totalHebdomendaire[0].total : 0,
     });
   } catch (error) {
+    // Gestion des erreurs
     return res.status(500).json({
       status: false,
       error: error.message,
     });
-  }
-};
+  }}
+
 
 exports.getStatsByMonth = async (req, res, next) => {
   try {
-    const { userId } = req.params
-
-    if (!userId) {
-      return res.status(400).json(
-        { message: 'userId est requis' },
-      );
-    }
-
-    const results = await Vente.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+    const results = await Commandes.aggregate([
       {
-        $group: {
-          _id: {
-            annee: { $year: "$date_vente" },
-            mois: { $month: "$date_vente" }
-          },
-          nombre_ventes: { $sum: "$qty" }, // Somme des quantités de produits vendus,
-          total_ventes: { $sum: { $multiply: ["$prix_vente", "$qty"] } }
+        $match: { 
+          status: "Livrée" // Filtrer uniquement les commandes livrées
         }
       },
       {
-        $sort: { "_id.annee": 1, "_id.mois": 1 }
+        $group: {
+          _id: {
+            annee: { $year: "$createdAt" }, // Extraire l'année
+            mois: { $month: "$createdAt" }  // Extraire le mois
+          },
+          nombre_commandes: { $sum: 1 }, // Compte le nombre de commandes
+          total_ventes: { $sum: "$total" } // Somme des totaux des commandes
+        }
+      },
+      {
+        $sort: { "_id.annee": 1, "_id.mois": 1 } // Tri par année et mois
       },
       {
         $project: {
-          _id: 0,
+          _id: 0, // Supprime l'ID MongoDB par défaut
           annee: "$_id.annee",
           mois: "$_id.mois",
-          nombre_ventes: 1,
+          nombre_commandes: 1,
           total_ventes: 1
         }
       }
     ]);
 
-    return res.status(200).json(
-      { message: 'ok', results },
-
-    );
+    return res.status(200).json({
+      message: 'Statistiques par mois (commandes livrées) récupérées avec succès',
+      statsMonth:results,
+    });
   } catch (err) {
+    return res.status(500).json({
+      error: 'Une erreur s\'est produite lors de la récupération des statistiques de commandes.',
+      message: err.message,
+    });
+  }
+};
+
+
+exports.countAllOrders = async (req, res)=>{
+  try{
+    const totalOrders = await Commandes.countDocuments(); // Compte toutes les commandes
+    return res.status(200).json({
+      status:true,
+      message:"ok",
+      countCommandes:totalOrders
+    })
+  }catch(err){
     return res.status(500).json(
       { error: 'Une erreur s\'est produite lors de la récupération des statistiques de vente.', message: err.message },
 
     );
   }
+}
+
+exports.getRevenu = async (req, res) => {
+  try {
+    const revenu = await Commandes.aggregate([
+      {
+        $match: {
+          status: "Livrée", // Filtrer uniquement les commandes livrées
+        },
+      },
+      {
+        $group: {
+          _id: null, // Pas de regroupement spécifique
+          totalRevenu: { $sum: "$total" }, // Somme des champs "total"
+        },
+      },
+    ]);
+
+    return res.status(200).json({
+      message: "Revenu total calculé avec succès.",
+      totalRevenu: revenu.length > 0 ? revenu[0].totalRevenu : 0,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erreur lors du calcul du revenu.",
+      error: error.message,
+    });
+  }
 };
+
+
+exports.getBenefice = async (req, res) => {
+  try {
+    const benefice = await Commandes.aggregate([
+      // Étape 1 : Filtrer les commandes livrées
+      {
+        $match: {
+          status: "Livrée",
+        },
+      },
+      // Étape 2 : Décomposer les produits dans le panier
+      {
+        $unwind: "$cart",
+      },
+      // Étape 3 : Lier les produits pour récupérer leur coût
+      {
+        $lookup: {
+          from: "produits", // Nom de la collection des produits
+          localField: "cart.producId", // Lier par l'ID du produit
+          foreignField: "_id", // ID du produit dans la collection "produits"
+          as: "produitDetails",
+        },
+      },
+      // Étape 4 : Calculer le coût et le revenu pour chaque produit
+      {
+        $project: {
+          revenuProduit: { $multiply: ["$cart.qty", "$cart.price"] }, // prix * quantité
+          coutProduit: {
+            $multiply: [
+              "$cart.qty",
+              { $arrayElemAt: ["$produitDetails.costPrice", 0] }, // Coût unitaire * quantité
+            ],
+          },
+        },
+      },
+      // Étape 5 : Somme des revenus et des coûts
+      {
+        $group: {
+          _id: null,
+          totalRevenu: { $sum: "$revenuProduit" }, // Somme des revenus
+          totalCout: { $sum: "$coutProduit" }, // Somme des coûts
+        },
+      },
+      // Étape 6 : Calcul du bénéfice
+      {
+        $project: {
+          _id: 0,
+          totalRevenu: 1,
+          totalCout: 1,
+          benefice: { $subtract: ["$totalRevenu", "$totalCout"] }, // Revenu - Coût
+        },
+      },
+    ]);
+
+    return res.status(200).json({
+      message: "Bénéfice calculé avec succès.",
+      results: benefice.length > 0 ? benefice[0].benefice : 0,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erreur lors du calcul du bénéfice.",
+      error: error.message,
+    });
+  }
+};
+
+exports.getProduitsLesPlusAchetés = async (req, res) => {
+  try {
+    const produitsLesPlusAchetés = await Commandes.aggregate([
+      // Étape 1 : Filtrer les commandes "Livrées"
+      {
+        $match: {
+          status: "Livrée", // Seulement les commandes livrées
+        },
+      },
+      // Étape 2 : Décomposer les produits dans le panier
+      {
+        $unwind: "$cart",
+      },
+      // Étape 3 : Regrouper les produits par leur identifiant (productId) et additionner la quantité
+      {
+        $group: {
+          _id: "$cart.producId", // Groupement par productId
+          totalQuantity: { $sum: "$cart.qty" }, // Somme des quantités
+        },
+      },
+      // Étape 4 : Joindre les informations des produits (nom, image, catégorie, sous-catégorie)
+      {
+        $lookup: {
+          from: "produits", // Collection des produits
+          localField: "_id", // Correspond à productId dans la collection Commandes
+          foreignField: "_id", // Correspond à _id dans la collection Produits
+          as: "produitDetails", // Nom donné à la collection jointe
+        },
+      },
+      // Étape 5 : Sélectionner uniquement les informations nécessaires
+      {
+        $project: {
+          _id: 0, // Ne pas inclure l'ID
+          produitId: "$_id", // Inclure le productId
+          totalQuantity: 1, // Inclure la quantité totale vendue
+          nom: { $arrayElemAt: ["$produitDetails.name", 0] }, // Nom du produit
+          image: { $arrayElemAt: ["$produitDetails.othersColors.images", 0] }, // Image du produit
+          categorie: { $arrayElemAt: ["$produitDetails.category", 0] }, // Catégorie
+          sousCategorie: { $arrayElemAt: ["$produitDetails.subCategory", 0] }, // Sous-catégorie
+        },
+      },
+      // Étape 6 : Trier les résultats par quantité (produits les plus achetés)
+      {
+        $sort: {
+          totalQuantity: -1, // Tri par quantité décroissante
+        },
+      },
+      // Étape 7 : Limiter le nombre de produits retournés (par exemple, top 5)
+      {
+        $limit: 5, // Limiter aux 5 produits les plus achetés
+      },
+    ]);
+
+    return res.status(200).json({
+      produitsLesPlusAchetés,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Erreur lors de la récupération des produits les plus achetés.",
+      error: error.message,
+    });
+  }
+};
+
+
+
 
 
 

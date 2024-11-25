@@ -270,9 +270,116 @@ exports.delete = async (req, res) => {
         await produit.deleteOne({ _id: id });
         return res.status(200).json({ message: 'Produit et image supprimés avec succès' });
 
-
-
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }
 };
+
+
+exports.getTotalStock = async (req, res) => {
+    try {
+      const totalStock = await Produits.aggregate([
+        {
+          $group: {
+            _id: null, // Pas de regroupement par catégorie ou autre
+            totalQuantite: { $sum: "$stockGlobal" }, // Calcul de la somme de stockGlobal
+          },
+        },
+      ]);
+  
+      return res.status(200).json({
+        message: "Quantité totale calculée avec succès.",
+        totalStock: totalStock.length > 0 ? totalStock[0].totalQuantite : 0,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: "Une erreur est survenue lors du calcul du stock total.",
+        error: error.message,
+      });
+    }
+  };
+
+exports.getTotalCost = async (req, res) => {
+    try {
+      const totalCost = await Produits.aggregate([
+        {
+          $project: {
+            totalValue: { $multiply: ["$price", "$stockGlobal"] }, // Calculer la valeur totale par produit
+          },
+        },
+        {
+          $group: {
+            _id: null, // Pas de regroupement
+            totalCost: { $sum: "$totalValue" }, // Somme des valeurs totales
+          },
+        },
+      ]);
+  
+      return res.status(200).json({
+        message: "Coût total calculé avec succès.",
+        totalCost: totalCost.length > 0 ? totalCost[0].totalCost : 0,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: "Une erreur est survenue lors du calcul du coût total.",
+        error: error.message,
+      });
+    }
+  };
+
+
+exports.getProduitsStockEpuisé = async (req, res) => {
+    try {
+      // Récupérer les produits dont le stock est épuisé (stockGlobal <= 0)
+      const produitsStockEpuisé = await Produits.aggregate([
+        {
+          $match: {
+            stockGlobal: { $lte: 5 },  // Filtrer les produits dont le stock est épuisé
+          },
+        },
+        {
+          $project: {
+            name: 1,               // Inclure le nom du produit
+            category: 1,           // Inclure la catégorie du produit
+            stockGlobal: 1,        // Inclure le stockGlobal
+            othersColors: 1,       // Garder othersColors tel quel pour vérifier son type
+          },
+        },
+        {
+          $project: {
+            name: 1,
+            category: 1,
+            stockGlobal: 1,
+            // Vérification que othersColors est bien un tableau avant de l'utiliser
+            image: {
+              $cond: {
+                if: { $eq: [{ $type: "$othersColors" }, "array"] }, // Vérifier si othersColors est un tableau
+                then: { $arrayElemAt: ["$othersColors.images", 0] },  // Extraire la première image
+                else: ""  // Si ce n'est pas un tableau, renvoyer une chaîne vide
+              }
+            },
+            color: {
+              $cond: {
+                if: { $eq: [{ $type: "$othersColors" }, "array"] }, // Vérifier si othersColors est un tableau
+                then: { $arrayElemAt: ["$othersColors.color", 0] },  // Extraire la couleur
+                else: ""  // Si ce n'est pas un tableau, renvoyer une chaîne vide
+              }
+            },
+          },
+        },
+      ]);
+  
+      // Retourner la réponse avec les produits stock épuisé
+      return res.status(200).json({
+        produitsStockEpuisé,
+      });
+    } catch (error) {
+      // Gérer l'erreur et afficher dans la console pour débogage
+      console.error("Erreur:", error);
+      return res.status(500).json({
+        message: "Erreur lors de la récupération des produits en stock épuisé.",
+        error: error.message,
+      });
+    }
+  };
+  

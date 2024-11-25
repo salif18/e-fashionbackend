@@ -9,5 +9,5 @@ Router.post("/registre",Auth_Controller.registre);
 Router.post("/login",Auth_Controller.login);
 Router.post("/update_password/:userId",middleware,Auth_Controller.updatePassword);
 Router.post("/update_user/:userId",middleware,Auth_Controller.updateUser);
-
+Router.get("/users/length",Auth_Controller.getUserNombres)
 module.exports = Router;

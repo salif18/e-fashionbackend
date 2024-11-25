@@ -225,3 +225,17 @@ exports.updateUser = async (req, res) => {
     });
   }
 };
+
+exports.getUserNombres =async(req,res)=>{
+  try{
+    const count = await Users.countDocuments(); // Compte tous les documents
+   
+    return res.status(200).json({
+      status:true,
+      message:"ok",
+      count:count
+    })
+  }catch(e){
+    return res.status(500).json({  status: false,message:"erreur de la requete", e})
+  }
+}

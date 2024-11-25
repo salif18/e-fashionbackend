@@ -11,8 +11,11 @@ Router.put("/order/:id/updateStatus",Commandes_Controller.updateOrderStatus);
 Router.get("/order/:userId",Commandes_Controller.getUserCommandes);
 Router.delete("/single/:id",Commandes_Controller.delete);
 
-Router.get("/",Commandes_Controller.getStatsByCategories);
-Router.get("/stats-by-hebdo/:userId",middleware,Commandes_Controller.getStatsHebdo);
-Router.get("/stats-by-month/:userId",middleware,Commandes_Controller.getStatsByMonth);
+Router.get("/count",Commandes_Controller.countAllOrders);
+Router.get("/plus-achetes",Commandes_Controller.getProduitsLesPlusAchetés);
+Router.get("/revenu",Commandes_Controller.getRevenu);
+Router.get("/benefice",Commandes_Controller.getBenefice);
+Router.get("/stats-by-hebdo",Commandes_Controller.getStatsHebdo);
+Router.get("/stats-by-month",Commandes_Controller.getStatsByMonth);
 
 module.exports = Router;
