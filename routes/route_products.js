@@ -11,6 +11,6 @@ Router.get("/",Product_Controller.getProduits);
 Router.get("/promo",Product_Controller.getPromos);
 Router.get("/single/:id",Product_Controller.getOneProduits);
 Router.put("/single/:id",Product_Controller.update);
-Router.delete("/single/:id",middleware,Product_Controller.delete);
+Router.delete("/single/:id",Product_Controller.delete);
 
 module.exports = Router;

@@ -241,9 +241,9 @@ exports.delete = async (req, res) => {
         }
 
 
-        if (produit.userId.toString() !== req.auth.userId) {
-            return res.status(401).json({ message: 'Non autorisé' });
-        }
+        // if (produit.userId.toString() !== req.auth.userId) {
+        //     return res.status(401).json({ message: 'Non autorisé' });
+        // }
         // METHODE SI LES FICHIER SON STOCKER EN LOCAL
         // const filename = produit.image.split('/images/')[1];
         // Supprimer l'image du serveur
@@ -260,9 +260,9 @@ exports.delete = async (req, res) => {
         //  Extraire l'identifiant public de l'image sur Cloudinary
 
         // Si le produit a un cloudinaryId, supprimer l'image sur Cloudinary
-        if (produit.cloudinaryId) {
-            await cloudinary.uploader.destroy(produit.cloudinaryId);
-        }
+        // if (produit.cloudinaryId) {
+        //     await cloudinary.uploader.destroy(produit.cloudinaryId);
+        // }
 
         // Supprimer le produit
         await produit.deleteOne({ _id: id });
