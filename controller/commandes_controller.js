@@ -661,24 +661,20 @@ exports.getBenefice = async (req, res) => {
 exports.getProduitsLesPlusAchetés = async (req, res) => {
   try {
     const produitsLesPlusAchetés = await Commandes.aggregate([
-      // Étape 1 : Filtrer les commandes "Livrées"
       {
         $match: {
           status: "Livrée", // Seulement les commandes livrées
         },
       },
-      // Étape 2 : Décomposer les produits dans le panier
       {
         $unwind: "$cart",
       },
-      // Étape 3 : Regrouper les produits par leur identifiant (productId) et additionner la quantité
       {
         $group: {
           _id: "$cart.producId", // Groupement par productId
           totalQuantity: { $sum: "$cart.qty" }, // Somme des quantités
         },
       },
-      // Étape 4 : Joindre les informations des produits (nom, image, catégorie, sous-catégorie)
       {
         $lookup: {
           from: "produits", // Collection des produits
@@ -687,25 +683,34 @@ exports.getProduitsLesPlusAchetés = async (req, res) => {
           as: "produitDetails", // Nom donné à la collection jointe
         },
       },
-      // Étape 5 : Sélectionner uniquement les informations nécessaires
       {
         $project: {
-          _id: 0, // Ne pas inclure l'ID
-          produitId: "$_id", // Inclure le productId
-          totalQuantity: 1, // Inclure la quantité totale vendue
-          nom: { $arrayElemAt: ["$produitDetails.name", 0] }, // Nom du produit
-          image: { $arrayElemAt: ["$produitDetails.othersColors.images", 0] }, // Image du produit
-          categorie: { $arrayElemAt: ["$produitDetails.category", 0] }, // Catégorie
-          sousCategorie: { $arrayElemAt: ["$produitDetails.subCategory", 0] }, // Sous-catégorie
+          _id: 0,
+          produitId: "$_id",
+          totalQuantity: 1,
+          nom: { $arrayElemAt: ["$produitDetails.name", 0] },
+          // Vérification si `othersColors.images` est un tableau non vide
+          image: {
+            $cond: {
+              if: {
+                $and: [
+                  { $isArray: "$produitDetails.othersColors.images" },
+                  { $gt: [{ $size: "$produitDetails.othersColors.images" }, 0] },
+                ],
+              },
+              then: { $arrayElemAt: ["$produitDetails.othersColors.images", 0] },
+              else: "default_image_url.jpg", // Remplacez par l'URL d'une image par défaut
+            },
+          },
+          categorie: { $arrayElemAt: ["$produitDetails.category", 0] },
+          sousCategorie: { $arrayElemAt: ["$produitDetails.subCategory", 0] },
         },
       },
-      // Étape 6 : Trier les résultats par quantité (produits les plus achetés)
       {
         $sort: {
           totalQuantity: -1, // Tri par quantité décroissante
         },
       },
-      // Étape 7 : Limiter le nombre de produits retournés (par exemple, top 5)
       {
         $limit: 5, // Limiter aux 5 produits les plus achetés
       },
