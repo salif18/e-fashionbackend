@@ -688,7 +688,7 @@ exports.getProduitsLesPlusAchetés = async (req, res) => {
           _id: 0,
           produitId: "$_id",
           totalQuantity: 1,
-          nom: { $arrayElemAt: ["$produitDetails.name", 0] },
+          name: { $arrayElemAt: ["$produitDetails.name", 0] },
           // Vérification si `othersColors.images` est un tableau non vide
           image: {
             $cond: {
