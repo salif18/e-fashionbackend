@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 
 exports.create = async (req, res) => {
   try {
-    const { userId, user, address, payementMode, cart, total } = req.body;
+    const { userId, user, address, payementMode, cart, location, total } = req.body;
   
     for (const item of cart) {
       const { producId, qty, size, color } = item;
@@ -61,6 +61,7 @@ exports.create = async (req, res) => {
       address,
       payementMode,
       status:"En attente",
+      location,
       cart,
       total,
     });
