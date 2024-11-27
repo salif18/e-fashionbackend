@@ -35,6 +35,10 @@ const UserSchema = new mongoose.Schema({
       payementMode: { type: String, required: true}, // Mode de paiement
       status: { type: String, required: true, default: "En attente" }, // Statut de la commande
       cart: { type: [CartItemSchema], required: true }, // Articles dans le panier
+      location: {
+        lat: { type: Number, required: true }, // Latitude
+        lng: { type: Number, required: true }, // Longitude
+      },
       total: { type: Number, required: true }, // Total de la commande
     },
     { timestamps: true } // Ajoute `createdAt` et `updatedAt`
