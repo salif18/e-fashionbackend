@@ -267,7 +267,7 @@ exports.delete = async (req, res) => {
         // Supprimer le produit
         await produit.deleteOne({ _id: id });
         // Si l'image est supprimée avec succès, supprimer le produit
-        await produit.deleteOne({ _id: id });
+        // await produit.deleteOne({ _id: id });
         return res.status(200).json({ message: 'Produit et image supprimés avec succès' });
 
     } catch (err) {
