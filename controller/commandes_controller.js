@@ -400,37 +400,37 @@ exports.delete = async (req, res, next) => {
 };
 
 
-exports.getStatsByCategories = async (req, res, next) => {
-  try {
-    const { userId } = req.params
+// exports.getStatsByCategories = async (req, res, next) => {
+//   try {
+//     const { userId } = req.params
 
-    if (!userId) {
-      return res.status(400).json(
-        { message: 'userId est requis' },
-      );
-    }
-    const results = await Vente.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(userId) } },
-      {
-        $group: {
-          _id: { nom: "$nom", categories: "$categories" },
-          total_vendu: { $sum: "$qty" }
-        }
-      },
-      {
-        $sort: { total_vendu: -1 } // Trier par total_vendu en ordre décroissant
-      }
-    ]);
+//     if (!userId) {
+//       return res.status(400).json(
+//         { message: 'userId est requis' },
+//       );
+//     }
+//     const results = await Vente.aggregate([
+//       { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+//       {
+//         $group: {
+//           _id: { nom: "$nom", categories: "$categories" },
+//           total_vendu: { $sum: "$qty" }
+//         }
+//       },
+//       {
+//         $sort: { total_vendu: -1 } // Trier par total_vendu en ordre décroissant
+//       }
+//     ]);
 
-    return res.status(200).json(
-      { message: 'ok', results: results },
-    );
-  } catch (err) {
-    return res.status(500).json(
-      { error: 'Une erreur s\'est produite lors de la récupération des statistiques de vente.', message: err.message },
-    );
-  }
-};
+//     return res.status(200).json(
+//       { message: 'ok', results: results },
+//     );
+//   } catch (err) {
+//     return res.status(500).json(
+//       { error: 'Une erreur s\'est produite lors de la récupération des statistiques de vente.', message: err.message },
+//     );
+//   }
+// };
 
 exports.getStatsHebdo = async (req, res, next) => {
   try {
@@ -503,8 +503,58 @@ exports.getStatsHebdo = async (req, res, next) => {
     });
   }}
 
+  exports.getStatsByYearEnCours = async (req, res, next) => {
+    const starYear = new Date(new Date().getFullYear() , 0,1)
+    const endYear = new Date(new Date().getFullYear() +1 , 0, 1)
+    try {
+      const results = await Commandes.aggregate([
+        {
+          $match: { 
+            status: "Livrée", // Filtrer uniquement les commandes livrées
+            createdAt:{
+              $gte:starYear,
+              $lte:endYear
+            }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              annee: { $year: "$createdAt" }, // Extraire l'année
+              mois: { $month: "$createdAt" }  // Extraire le mois
+            },
+            nombre_commandes: { $sum: 1 }, // Compte le nombre de commandes
+            total_ventes: { $sum: "$total" } // Somme des totaux des commandes
+          }
+        },
+        {
+          $sort: { "_id.annee": 1, "_id.mois": 1 } // Tri par année et mois
+        },
+        {
+          $project: {
+            _id: 0, // Supprime l'ID MongoDB par défaut
+            annee: "$_id.annee",
+            mois: "$_id.mois",
+            nombre_commandes: 1,
+            total_ventes: 1
+          }
+        }
+      ]);
+  
+      return res.status(200).json({
+        message: 'Statistiques par mois (commandes livrées) récupérées avec succès',
+        stats:results,
+      });
+    } catch (err) {
+      return res.status(500).json({
+        error: 'Une erreur s\'est produite lors de la récupération des statistiques de commandes.',
+        message: err.message,
+      });
+    }
+  };
 
-exports.getStatsByMonth = async (req, res, next) => {
+
+exports.getStatsByYears = async (req, res, next) => {
   try {
     const results = await Commandes.aggregate([
       {
@@ -547,6 +597,52 @@ exports.getStatsByMonth = async (req, res, next) => {
     });
   }
 };
+
+exports.clientFidelAndGrosAcheteur = async (req, res)=>{
+  try{
+    const result = await Commandes.aggregate([
+       {
+        $group:{
+          _id:"$userId",
+          nombreAchat:{$sum:1},
+          sommeRendu:{$sum:"$total"}
+        }
+       },
+       {$sort:{nombreAchat:-1 , sommeRendu:-1}},
+       {
+        $lookup:{
+          from:"users",
+          localField:"_id",
+          foreignField:"_id",
+          as:"userInfo"
+        }
+       },
+       {
+        $unwind:"$userInfo"
+       },
+       {
+        $project:{
+          _id:0,
+          userId:"$_id",
+          name:"$userInfo.name",
+          email:"$userInfo.email",
+          nombreAchat:1,
+          sommeRendu:1
+        }
+       }
+    ])
+    return res.status(200).json({
+      status:true,
+      message:"ok",
+      stats:result
+    })
+  }catch(err){
+    return res.status(500).json(
+      { error: 'Une erreur s\'est produite lors de la récupération des statistiques de vente.', message: err.message },
+
+    );
+  }
+}
 
 
 exports.countAllOrders = async (req, res)=>{

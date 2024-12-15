@@ -16,6 +16,8 @@ Router.get("/plus-achetes",Commandes_Controller.getProduitsLesPlusAchetés);
 Router.get("/revenu",Commandes_Controller.getRevenu);
 Router.get("/benefice",Commandes_Controller.getBenefice);
 Router.get("/stats-by-hebdo",Commandes_Controller.getStatsHebdo);
-Router.get("/stats-by-month",Commandes_Controller.getStatsByMonth);
+Router.get("/stats-by-year-current",Commandes_Controller.getStatsByYearEnCours);
+Router.get("/stats-by-year",Commandes_Controller.getStatsByYears);
+Router.get("/client-fidel-gros-acheteur",Commandes_Controller.clientFidelAndGrosAcheteur);
 
 module.exports = Router;
