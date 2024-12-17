@@ -12,6 +12,7 @@ exports.getStatsDay=async(req,res,next)=>{
     const results = await Commandes.aggregate([
         {
             $match: {
+                status: "Livrée", // Filtrer uniquement les commandes livrées
                 createdAt: { $gte: starOfDay, $lte: endOfDay }
             }
         },
@@ -132,6 +133,7 @@ exports.getStatCurrentMonth = async (req, res, next) => {
         const results = await Commandes.aggregate([
             {
                 $match: {
+                    status: "Livrée", // Filtrer uniquement les commandes livrées
                     createdAt: { $gte: starMonth, $lte: endMonth }
                 }
             },
@@ -215,7 +217,7 @@ exports.getStatsCurrentYear = async (req, res, next) => {
         ]);
 
         return res.status(200).json({
-            message: 'Statistiques par mois (commandes livrées) récupérées avec succès',
+            message: 'Statistiques de lannee courante (commandes livrées) récupérées avec succès',
             stats: results,
         });
     } catch (err) {
@@ -261,7 +263,7 @@ exports.getStatsByYears = async (req, res, next) => {
 
         return res.status(200).json({
             message: 'Statistiques par mois (commandes livrées) récupérées avec succès',
-            statsMonth: results,
+            stats: results,
         });
     } catch (err) {
         return res.status(500).json({
@@ -274,6 +276,11 @@ exports.getStatsByYears = async (req, res, next) => {
 exports.clientFidelAndGrosAcheteur = async (req, res) => {
     try {
         const result = await Commandes.aggregate([
+            {
+                $match: {
+                    status: "Livrée" // Filtrer uniquement les commandes livrées
+                }
+            },
             {
                 $group: {
                     _id: "$userId",
