@@ -2,53 +2,53 @@ const Commandes = require("../models/commandes_model")
 const moment = require("moment");
 const mongoose = require("mongoose");
 
-exports.getStatsDay=async(req,res,next)=>{
-  try{
-    const now  = new Date()
-    const starOfDay = new Date(now)
-    starOfDay.setHours(0,0,0,0)
-    const endOfDay = new Date(now)
-    endOfDay.setHours(23,59,59,999)
-    const results = await Commandes.aggregate([
-        {
-            $match: {
-                status: "Livrée", // Filtrer uniquement les commandes livrées
-                createdAt: { $gte: starOfDay, $lte: endOfDay }
-            }
-        },
-        {
-            $group: {
-                _id:  { $hour: "$createdAt" },
-                    
-                nombre_commandes: { $sum: 1 },
-                total_ventes: { $sum: "$total" }
-            }
-        },
-        {
-            $project: {
-                _id: 0,
-                hour: "$_id",
-                nombre_commandes: 1,
-                total_ventes: 1
+exports.getStatsDay = async (req, res, next) => {
+    try {
+        const now = new Date()
+        const starOfDay = new Date(now)
+        starOfDay.setHours(0, 0, 0, 0)
+        const endOfDay = new Date(now)
+        endOfDay.setHours(23, 59, 59, 999)
+        const results = await Commandes.aggregate([
+            {
+                $match: {
+                    status: "Livrée", // Filtrer uniquement les commandes livrées
+                    createdAt: { $gte: starOfDay, $lte: endOfDay }
+                }
+            },
+            {
+                $group: {
+                    _id: { $hour: "$createdAt" },
 
-            }
-        },
+                    nombre_commandes: { $sum: 1 },
+                    total_ventes: { $sum: "$total" }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    hour: "$_id",
+                    nombre_commandes: 1,
+                    total_ventes: 1
 
-        {$sort:{_id:1}}
-    ]);
+                }
+            },
 
-    // Réponse au client
-    return res.status(200).json({
-        stats: results,
-       
-    });
-} catch (error) {
-    // Gestion des erreurs
-    return res.status(500).json({
-        status: false,
-        error: error.message,
-    });
-}
+            { $sort: { _id: 1 } }
+        ]);
+
+        // Réponse au client
+        return res.status(200).json({
+            stats: results,
+
+        });
+    } catch (error) {
+        // Gestion des erreurs
+        return res.status(500).json({
+            status: false,
+            error: error.message,
+        });
+    }
 }
 
 exports.getStatsHebdo = async (req, res, next) => {
@@ -122,6 +122,74 @@ exports.getStatsHebdo = async (req, res, next) => {
         });
     }
 }
+
+// exports.getStatsHebdo = async (req, res, next) => {
+//     try {
+//         const now = new Date()
+//         const today = now.getDay()
+//         // Début et fin de la semaine en cours
+//         const startOfWeek = new Date(now)
+//         startOfWeek.setDate(now.getDate() - (today === 0 ? 6 : today - 1))
+//         startOfWeek.setHours(0, 0, 0, 0)
+//         const endOfWeek = new Date(startOfWeek)
+//         endOfWeek.setDate(startOfWeek.getDate() + 6)
+//         endOfWeek.setHours(23, 59, 59, 999)
+
+//         const results = await Commandes.aggregate([
+//             {
+//                 $match: {
+//                     status: "Livrée", // Filtrer uniquement les commandes livrées
+//                     createdAt: {
+//                         $gte: startOfWeek, // Début de la semaine
+//                         $lte: endOfWeek, // Fin de la semaine
+//                     },
+//                 },
+//             },
+//             {
+//                 $group: {
+//                     _id: {
+//                         $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+//                     },
+//                     total: { $sum: "$total" }, // Somme des totaux hebdomadaires
+//                 },
+//             },
+
+          
+
+//         ])
+
+//            // Calcul du total hebdomadaire
+//            const totalHebdomendaire = await Commandes.aggregate([
+//             {
+//                 $match: {
+//                     status: "Livrée", // Filtrer uniquement les commandes livrées
+//                     createdAt: {
+//                         $gte: startOfWeek, // Début de la semaine
+//                         $lte: endOfWeek, // Fin de la semaine
+//                     },
+//                 },
+//             },
+//             {
+//                 $group: {
+//                     _id: null,
+//                     total: { $sum: "$total" }, // Somme des totaux hebdomadaires
+//                 },
+//             },
+//         ]);
+
+//         // Réponse au client
+//         return res.status(200).json({
+//             statsWeek: results,
+//             totalHebdo: totalHebdomendaire.length > 0 ? totalHebdomendaire[0].total : 0,
+//         });
+//     } catch (error) {
+//         // Gestion des erreurs
+//         return res.status(500).json({
+//             status: false,
+//             error: error.message,
+//         });
+//     }
+// }
 
 exports.getStatCurrentMonth = async (req, res, next) => {
     const now = new Date()
