@@ -119,7 +119,7 @@ exports.getStatsHebdo = async (req, res, next) => {
         return res.status(500).json({
             status: false,
             error: error.message,
-        });
+        }); 
     }
 }
 
@@ -148,7 +148,7 @@ exports.getStatsHebdo = async (req, res, next) => {
 //             {
 //                 $group: {
 //                     _id: {
-//                         $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+//                         $dateToString: { format: "%d-%m-%Y", date: "$createdAt" },
 //                     },
 //                     total: { $sum: "$total" }, // Somme des totaux hebdomadaires
 //                 },
@@ -216,6 +216,7 @@ exports.getStatCurrentMonth = async (req, res, next) => {
                     total_ventes: { $sum: "$total" }
                 }
             },
+            {$sort: {"_id.day": 1 }} ,// Tri par année et mois
             {
                 $project: {
                     _id: 0,
@@ -341,7 +342,7 @@ exports.getStatsByYears = async (req, res, next) => {
     }
 };
 
-exports.clientFidelAndGrosAcheteur = async (req, res) => {
+exports.clientFidel = async (req, res) => {
     try {
         const result = await Commandes.aggregate([
             {
@@ -353,10 +354,11 @@ exports.clientFidelAndGrosAcheteur = async (req, res) => {
                 $group: {
                     _id: "$userId",
                     nombreAchat: { $sum: 1 },
-                    sommeRendu: { $sum: "$total" }
+                    
                 }
             },
-            { $sort: { nombreAchat: -1, sommeRendu: -1 } },
+            { $sort: { nombreAchat: -1} },
+            {$limit:10},
             {
                 $lookup: {
                     from: "users",
@@ -375,6 +377,56 @@ exports.clientFidelAndGrosAcheteur = async (req, res) => {
                     name: "$userInfo.name",
                     email: "$userInfo.email",
                     nombreAchat: 1,
+                }
+            }
+        ])
+        return res.status(200).json({
+            status: true,
+            message: "ok",
+            stats: result
+        })
+    } catch (err) {
+        return res.status(500).json(
+            { error: 'Une erreur s\'est produite lors de la récupération des statistiques de vente.', message: err.message },
+
+        );
+    }
+}
+
+
+exports.clientGrosAcheteur = async (req, res) => {
+    try {
+        const result = await Commandes.aggregate([
+            {
+                $match: {
+                    status: "Livrée" // Filtrer uniquement les commandes livrées
+                }
+            },
+            {
+                $group: {
+                    _id: "$userId",
+                    sommeRendu: { $sum: "$total" }
+                }
+            },
+            { $sort: { sommeRendu: -1 } },
+            {$limit:10},
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "userInfo"
+                }
+            },
+            {
+                $unwind: "$userInfo"
+            },
+            {
+                $project: {
+                    _id: 0,
+                    userId: "$_id",
+                    name: "$userInfo.name",
+                    email: "$userInfo.email",
                     sommeRendu: 1
                 }
             }

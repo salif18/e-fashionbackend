@@ -21,6 +21,6 @@ Router.get("/stats-by-hebdo",Stats_Controller.getStatsHebdo);
 Router.get("/stats-by-month-current",Stats_Controller.getStatCurrentMonth);
 Router.get("/stats-by-year-current",Stats_Controller.getStatsCurrentYear);
 Router.get("/stats-by-year",Stats_Controller.getStatsByYears);
-Router.get("/client-fidel-gros-acheteur",Stats_Controller.clientFidelAndGrosAcheteur);
-
+Router.get("/client-fidel",Stats_Controller.clientFidel);
+Router.get("/gros-acheteur",Stats_Controller.clientGrosAcheteur)
 module.exports = Router;
