@@ -461,6 +461,56 @@ exports.countAllOrders = async (req, res) => {
     }
 }
 
+exports.countStatsOrders = async (req, res) => {
+    try {
+        const totalOrders = await Commandes.aggregate([
+            {
+                $facet: {
+                    livrees: [
+                        {
+                            $match: { status: 'Livrée' }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                total: { $sum: 1 }
+                            }
+                        }
+                    ],
+                    annulees: [
+                        {
+                            $match: { status: 'Annulée' }
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                total: { $sum: 1 }
+                            }
+                        }
+                    ]
+                }
+            }
+        ]);
+
+        // Restructuration des résultats pour une sortie simplifiée
+        const countCommandes = {
+            livrees: totalOrders[0].livrees.length > 0 ? totalOrders[0].livrees[0].total : 0,
+            annulees: totalOrders[0].annulees.length > 0 ? totalOrders[0].annulees[0].total : 0,
+        };
+
+        return res.status(200).json({
+            status: true,
+            message: "ok",
+            countCommandes
+        });
+    } catch (err) {
+        return res.status(500).json({
+            error: "Une erreur s'est produite lors de la récupération des statistiques de vente.",
+            message: err.message,
+        });
+    }
+};
+
 exports.getProduitsLesPlusAchetés = async (req, res) => {
     try {
         const produitsLesPlusAchetés = await Commandes.aggregate([

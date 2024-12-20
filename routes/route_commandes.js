@@ -13,6 +13,7 @@ Router.get("/order/:userId",Commandes_Controller.getUserCommandes);
 Router.delete("/single/:id",Commandes_Controller.delete);
 
 Router.get("/count",Stats_Controller.countAllOrders);
+Router.get("/count_stats",Stats_Controller.countStatsOrders);
 Router.get("/plus-achetes",Stats_Controller.getProduitsLesPlusAchetés);
 Router.get("/revenu",Commandes_Controller.getRevenu);
 Router.get("/benefice",Commandes_Controller.getBenefice);
