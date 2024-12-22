@@ -514,35 +514,28 @@ exports.countStatsOrders = async (req, res) => {
 exports.getProduitsLesPlusAchetés = async (req, res) => {
     try {
         const produitsLesPlusAchetés = await Commandes.aggregate([
-            {
-                $match: {
-                    status: "Livrée", // Seulement les commandes livrées
-                },
-            },
-            {
-                $unwind: "$cart",
-            },
+            { $match: { status: "Livrée" } },
+            { $unwind: "$cart" },
             {
                 $group: {
-                    _id: "$cart.producId", // Groupement par productId
-                    totalQuantity: { $sum: "$cart.qty" }, // Somme des quantités
+                    _id: "$cart.producId",
+                    totalQuantity: { $sum: "$cart.qty" },
                 },
             },
             {
                 $lookup: {
-                    from: "produits", // Collection des produits
-                    localField: "_id", // Correspond à productId dans la collection Commandes
-                    foreignField: "_id", // Correspond à _id dans la collection Produits
-                    as: "produitDetails", // Nom donné à la collection jointe
+                    from: "produits",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "produitDetails",
                 },
             },
+            { $unwind: { path: "$produitDetails", preserveNullAndEmptyArrays: true } },
             {
                 $project: {
-                    _id: 0,
                     produitId: "$_id",
                     totalQuantity: 1,
-                    name: { $arrayElemAt: ["$produitDetails.name", 0] },
-                    // Vérification si `othersColors.images` est un tableau non vide
+                    name: "$produitDetails.name",
                     image: {
                         $cond: {
                             if: {
@@ -552,21 +545,15 @@ exports.getProduitsLesPlusAchetés = async (req, res) => {
                                 ],
                             },
                             then: { $arrayElemAt: ["$produitDetails.othersColors.images", 0] },
-                            else: "default_image_url.jpg", // Remplacez par l'URL d'une image par défaut
+                            else: "default_image_url.jpg",
                         },
                     },
-                    categorie: { $arrayElemAt: ["$produitDetails.category", 0] },
-                    sousCategorie: { $arrayElemAt: ["$produitDetails.subCategory", 0] },
+                    categorie: "$produitDetails.category",
+                    sousCategorie: "$produitDetails.subCategory",
                 },
             },
-            {
-                $sort: {
-                    totalQuantity: -1, // Tri par quantité décroissante
-                },
-            },
-            {
-                $limit: 5, // Limiter aux 5 produits les plus achetés
-            },
+            { $sort: { totalQuantity: -1 ,produitId: 1} },
+            { $limit: 10 },
         ]);
 
         return res.status(200).json({
