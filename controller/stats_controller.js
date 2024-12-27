@@ -119,7 +119,7 @@ exports.getStatsHebdo = async (req, res, next) => {
         return res.status(500).json({
             status: false,
             error: error.message,
-        }); 
+        });
     }
 }
 
@@ -154,7 +154,7 @@ exports.getStatsHebdo = async (req, res, next) => {
 //                 },
 //             },
 
-          
+
 
 //         ])
 
@@ -216,7 +216,7 @@ exports.getStatCurrentMonth = async (req, res, next) => {
                     total_ventes: { $sum: "$total" }
                 }
             },
-            {$sort: {"_id.day": 1 }} ,// Tri par année et mois
+            { $sort: { "_id.day": 1 } },// Tri par année et mois
             {
                 $project: {
                     _id: 0,
@@ -354,11 +354,11 @@ exports.clientFidel = async (req, res) => {
                 $group: {
                     _id: "$userId",
                     nombreAchat: { $sum: 1 },
-                    
+
                 }
             },
-            { $sort: { nombreAchat: -1} },
-            {$limit:10},
+            { $sort: { nombreAchat: -1 } },
+            { $limit: 10 },
             {
                 $lookup: {
                     from: "users",
@@ -409,7 +409,7 @@ exports.clientGrosAcheteur = async (req, res) => {
                 }
             },
             { $sort: { sommeRendu: -1 } },
-            {$limit:10},
+            { $limit: 10 },
             {
                 $lookup: {
                     from: "users",
@@ -552,7 +552,7 @@ exports.getProduitsLesPlusAchetés = async (req, res) => {
                     sousCategorie: "$produitDetails.subCategory",
                 },
             },
-            { $sort: { totalQuantity: -1 ,produitId: 1} },
+            { $sort: { totalQuantity: -1, produitId: 1 } },
             { $limit: 10 },
         ]);
 
