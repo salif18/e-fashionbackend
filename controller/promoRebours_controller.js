@@ -15,7 +15,7 @@ exports.CreerRebours =async (req, res) => {
       const promotion = new PromoCompteRebour({ name, startTime, endTime });
       await promotion.save();
 
-      
+    
     // Activer la promotion sur les produits concernés
     // await Product.updateMany(
     //     { _id: { $in: products } },
@@ -44,9 +44,9 @@ exports.getRebours =async (req, res) => {
       });
   
       if (activePromotion) {
-        res.json(activePromotion);
+        return res.status(200).json(activePromotion);
       } else {
-        res.status(404).json({ message: "Aucune promotion active" });
+        return res.status(404).json({ message: "Aucune promotion active" });
       }
     } catch (error) {
       res.status(500).json({ error: error.message });
