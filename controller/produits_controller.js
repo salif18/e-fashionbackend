@@ -148,13 +148,13 @@ exports.getPromos = async (req, res) => {
   }
 };
 
-exports.getAllPromo =async(req,res)=>{
-  try{
+exports.getAllPromo = async (req, res) => {
+  try {
     // Étape 1 : Trouver le produit spécial avec le plus grand `discount_percentage`
     let promos = await Produits.find({ is_promo: true })
       .sort({ discount_percentage: -1 }) // Trier par `discount_percentage` en ordre décroissant
-  
-      // Ajouter la première image de `othersColors` pour chaque produit des autres promos
+
+    // Ajouter la première image de `othersColors` pour chaque produit des autres promos
     const offres = promos.map((produit) => {
       const firstColor = produit.othersColors?.[0]; // Vérifier si `othersColors` n'est pas vide
       const firstImage = firstColor?.images || null; // Récupérer l'image si elle existe
@@ -168,13 +168,13 @@ exports.getAllPromo =async(req,res)=>{
       return res.status(404).json({ message: "Aucun autre produit en promotion trouvé" });
     }
 
-     // Réponse avec le produit spécial et les autres promotions
-     return res.status(200).json({
+    // Réponse avec le produit spécial et les autres promotions
+    return res.status(200).json({
       message: "Requête reçue",
-      offres:offres
+      offres: offres
     });
 
-  }catch(e){
+  } catch (e) {
     return res.status(500).json({ message: "Erreur", error: err.message });
   }
 }
