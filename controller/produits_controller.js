@@ -5,7 +5,6 @@ const Produits = require("../models/produits_model");
 exports.create = async (req, res, next) => {
   try {
 
-
     //valeur initial
     // let imageUrl = "";
     // let cloudinaryId = "";

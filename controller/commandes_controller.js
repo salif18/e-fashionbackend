@@ -67,7 +67,7 @@ exports.create = async (req, res) => {
     });
 
     const savedOrder = await newOrder.save();
-
+    console.log("nouveau save :",savedOrder)
     res.status(201).json({ message: "Commande créée avec succès", order: savedOrder });
   } catch (error) {
     res.status(500).json({ message: error.message });
