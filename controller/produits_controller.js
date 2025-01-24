@@ -38,7 +38,7 @@ exports.create = async (req, res, next) => {
 
 exports.getProduits = async (req, res) => {
   try {
-    const produits = await Produits.find();
+    const produits = await Produits.find({ stockGlobal: { $gt: 0 } });
 
     // Ajouter un champ `image` à chaque produit
     const produitsAvecImage = produits.map(produit => {
