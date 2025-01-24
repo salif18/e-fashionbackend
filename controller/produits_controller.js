@@ -100,7 +100,7 @@ exports.getProductByCategory = async (req, res) => {
 exports.getPromos = async (req, res) => {
   try {
     // Étape 1 : Trouver le produit spécial avec le plus grand `discount_percentage`
-    let produitSpecial = await Produits.findOne({ is_promo: true })
+    let produitSpecial = await Produits.findOne({ is_promo: true ,stockGlobal: { $gt: 0 } })
       .sort({ discount_percentage: -1 }) // Trier par `discount_percentage` en ordre décroissant
       .limit(1); // Récupérer seulement un produit
 
@@ -150,7 +150,7 @@ exports.getPromos = async (req, res) => {
 exports.getAllPromo = async (req, res) => {
   try {
     // Étape 1 : Trouver le produit spécial avec le plus grand `discount_percentage`
-    let promos = await Produits.find({ is_promo: true })
+    let promos = await Produits.find({ is_promo: true ,stockGlobal: { $gt: 0 } })
       .sort({ discount_percentage: -1 }) // Trier par `discount_percentage` en ordre décroissant
 
     // Ajouter la première image de `othersColors` pour chaque produit des autres promos
